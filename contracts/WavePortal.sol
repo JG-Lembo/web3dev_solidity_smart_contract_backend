@@ -18,7 +18,7 @@ contract WavePortal {
     Message[] messages;
 
     event NewMessageReceived(address writer, string message);
-    event MessageGenerated(string message);
+    event MessageGenerated(Message message);
 
     mapping(address => uint256) public lastSuggestionAt;
 
@@ -53,7 +53,7 @@ contract WavePortal {
             }
         }
         todayReads += 1;
-        emit MessageGenerated(messages[currentMessageIndex].message);
+        emit MessageGenerated(messages[currentMessageIndex]);
 
         messages.push(Message(msg.sender, message));
         emit NewMessageReceived(msg.sender, message);
@@ -67,6 +67,20 @@ contract WavePortal {
             (bool success, ) = (msg.sender).call{value: prizeAmount}("");
             require(success, "Falhou em sacar dinheiro do contrato.");
         }
+    }
+
+    function checkUserSentMessage() public view returns (bool) {
+        if (lastSuggestionAt[msg.sender] / 86400 == block.timestamp / 86400)
+            return true;
+        return false;
+    }
+
+    function getMessageOfTheDay() public view returns (Message memory) {
+
+        require (checkUserSentMessage(),
+        "Voce ainda nao mandou sua sugestao hoje");
+
+        return messages[currentMessageIndex];
     }
 
     function getReads() public view returns (uint256, uint256) {
